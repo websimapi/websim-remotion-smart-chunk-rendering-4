@@ -37,6 +37,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     const vrButton = VRButton.createButton(renderer);
+    vrButton.style.zIndex = "10000";
     document.body.appendChild(vrButton);
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
       generateMipmaps: true,
@@ -58,11 +59,24 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       music.setBuffer(buffer);
       music.setLoop(true);
       music.setVolume(0.5);
+      if (music.context.state === "running") {
+        music.play();
+      } else {
+        const resume = () => {
+          music.context.resume().then(() => {
+            if (!music.isPlaying) music.play();
+          });
+          window.removeEventListener("click", resume);
+          window.removeEventListener("keydown", resume);
+        };
+        window.addEventListener("click", resume);
+        window.addEventListener("keydown", resume);
+      }
     });
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.position.set(0, -3.5, 6);
       if (music.context.state === "suspended") music.context.resume();
-      music.play();
+      if (!music.isPlaying) music.play();
     });
     renderer.xr.addEventListener("sessionend", () => {
       dolly.position.set(0, 0, 0);
@@ -221,12 +235,12 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
       rendererRef.current.setSize(width, height, false);
-      composerRef.current.setSize(width, height);
-      if (ssaoPass) ssaoPass.setSize(width, height);
+      if (composerRef.current) composerRef.current.setSize(width, height);
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
     };
-    window.addEventListener("resize", onResize);
+    const resizeObserver = new ResizeObserver(() => onResize());
+    resizeObserver.observe(containerRef.current);
     let lastTime = performance.now();
     let virtualFrame = 0;
     const simFps = 30;
@@ -263,9 +277,10 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       document.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("resize", onResize);
+      resizeObserver.disconnect();
       canvas.removeEventListener("click", onClick);
       renderer.setAnimationLoop(null);
+      if (music.isPlaying) music.stop();
       if (vrButton.parentNode) vrButton.parentNode.removeChild(vrButton);
       if (cubeRenderTarget) cubeRenderTarget.dispose();
       if (composerRef.current) composerRef.current.dispose();
@@ -295,7 +310,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 345,
+      lineNumber: 368,
       columnNumber: 5
     }
   );

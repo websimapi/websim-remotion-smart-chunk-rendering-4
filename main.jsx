@@ -1,4 +1,4 @@
-import { jsxDEV } from "react/jsx-dev-runtime";
+import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Player } from "@remotion/player";
@@ -11,6 +11,8 @@ import { KitchenSceneInteractive } from "./scene.jsx";
 const App = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [showHelpers, setShowHelpers] = useState(false);
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const [vrAvailable, setVrAvailable] = useState(false);
   const [config, setConfig] = useState({
     duration: 95,
     fps: 30,
@@ -21,9 +23,17 @@ const App = () => {
   });
   const playerRef = useRef(null);
   useEffect(() => {
+    if ("xr" in navigator) {
+      navigator.xr.isSessionSupported("immersive-vr").then((supported) => {
+        setVrAvailable(supported);
+      });
+    }
     const handleKey = (e) => {
       if (e.key === "~" || e.key === "`") {
         setShowDebug((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setInteractiveMode(false);
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -36,43 +46,108 @@ const App = () => {
     recordChunk,
     renderAllChunks
   } = useRendering(config, playerRef);
-  return /* @__PURE__ */ jsxDEV("div", { style: styles.container, children: [
-    showDebug && /* @__PURE__ */ jsxDEV("header", { style: styles.header, children: [
-      /* @__PURE__ */ jsxDEV("h1", { style: styles.h1, children: "\u{1F3AC} Remotion Smart Chunk Manager" }, void 0, false, {
-        fileName: "<stdin>",
-        lineNumber: 47,
-        columnNumber: 11
-      }),
-      /* @__PURE__ */ jsxDEV("p", { style: styles.subtitle, children: "Optimized rendering pipeline for WebSim & Lambda" }, void 0, false, {
-        fileName: "<stdin>",
-        lineNumber: 48,
-        columnNumber: 11
-      })
-    ] }, void 0, true, {
-      fileName: "<stdin>",
-      lineNumber: 46,
-      columnNumber: 9
-    }),
-    /* @__PURE__ */ jsxDEV("div", { style: styles.grid, children: [
-      showDebug && /* @__PURE__ */ jsxDEV(
-        DebugPanel,
+  if (interactiveMode) {
+    return /* @__PURE__ */ jsxDEV("div", { style: styles.fullScreenOverlay, children: [
+      /* @__PURE__ */ jsxDEV(
+        "button",
         {
-          config,
-          setConfig,
-          stats,
-          recording,
-          renderAllChunks,
-          showHelpers,
-          setShowHelpers
+          style: styles.exitButton,
+          onClick: () => setInteractiveMode(false),
+          children: "\u2190 Exit Scene"
         },
         void 0,
         false,
         {
           fileName: "<stdin>",
-          lineNumber: 55,
-          columnNumber: 11
+          lineNumber: 60,
+          columnNumber: 9
         }
       ),
+      /* @__PURE__ */ jsxDEV(KitchenSceneInteractive, { showHelpers }, void 0, false, {
+        fileName: "<stdin>",
+        lineNumber: 66,
+        columnNumber: 9
+      })
+    ] }, void 0, true, {
+      fileName: "<stdin>",
+      lineNumber: 59,
+      columnNumber: 7
+    });
+  }
+  return /* @__PURE__ */ jsxDEV("div", { style: styles.container, children: [
+    /* @__PURE__ */ jsxDEV("div", { style: { ...styles.header, display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }, children: [
+      /* @__PURE__ */ jsxDEV("div", { children: [
+        /* @__PURE__ */ jsxDEV("h1", { style: styles.h1, children: "Remotion Kitchen Scene" }, void 0, false, {
+          fileName: "<stdin>",
+          lineNumber: 76,
+          columnNumber: 11
+        }),
+        /* @__PURE__ */ jsxDEV("p", { style: styles.subtitle, children: "Cinematic raytraced rendering pipeline" }, void 0, false, {
+          fileName: "<stdin>",
+          lineNumber: 77,
+          columnNumber: 11
+        })
+      ] }, void 0, true, {
+        fileName: "<stdin>",
+        lineNumber: 75,
+        columnNumber: 9
+      }),
+      /* @__PURE__ */ jsxDEV("div", { style: { display: "flex", gap: "15px", flexWrap: "wrap", justifyContent: "center" }, children: [
+        vrAvailable && /* @__PURE__ */ jsxDEV(
+          "button",
+          {
+            style: styles.vrButtonPrompt,
+            onClick: () => setInteractiveMode(true),
+            children: [
+              /* @__PURE__ */ jsxDEV("span", { style: { fontSize: "20px" }, children: "\u{1F97D}" }, void 0, false, {
+                fileName: "<stdin>",
+                lineNumber: 87,
+                columnNumber: 15
+              }),
+              " Enter VR Experience"
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "<stdin>",
+            lineNumber: 83,
+            columnNumber: 13
+          }
+        ),
+        /* @__PURE__ */ jsxDEV(
+          "button",
+          {
+            style: { ...styles.vrButtonPrompt, background: "rgba(255,255,255,0.1)", boxShadow: "none", border: "1px solid rgba(255,255,255,0.2)" },
+            onClick: () => setInteractiveMode(true),
+            children: [
+              /* @__PURE__ */ jsxDEV("span", { children: "\u{1F579}\uFE0F" }, void 0, false, {
+                fileName: "<stdin>",
+                lineNumber: 95,
+                columnNumber: 13
+              }),
+              " Launch Interactive Mode"
+            ]
+          },
+          void 0,
+          true,
+          {
+            fileName: "<stdin>",
+            lineNumber: 91,
+            columnNumber: 11
+          }
+        )
+      ] }, void 0, true, {
+        fileName: "<stdin>",
+        lineNumber: 81,
+        columnNumber: 9
+      })
+    ] }, void 0, true, {
+      fileName: "<stdin>",
+      lineNumber: 74,
+      columnNumber: 7
+    }),
+    /* @__PURE__ */ jsxDEV("div", { style: styles.grid, children: [
       /* @__PURE__ */ jsxDEV("div", { style: styles.playerWrapper, children: stats.totalFrames > 0 ? /* @__PURE__ */ jsxDEV(
         Player,
         {
@@ -96,7 +171,7 @@ const App = () => {
         false,
         {
           fileName: "<stdin>",
-          lineNumber: 69,
+          lineNumber: 105,
           columnNumber: 13
         }
       ) : /* @__PURE__ */ jsxDEV("div", { style: {
@@ -111,98 +186,79 @@ const App = () => {
         color: "white"
       }, children: "Invalid Duration" }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 87,
+        lineNumber: 123,
         columnNumber: 14
       }) }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 67,
+        lineNumber: 103,
         columnNumber: 9
       }),
-      showDebug && /* @__PURE__ */ jsxDEV(
-        ChunkGrid,
-        {
-          stats,
-          renderStatus,
-          recordChunk
-        },
-        void 0,
-        false,
-        {
-          fileName: "<stdin>",
-          lineNumber: 99,
-          columnNumber: 11
-        }
-      ),
-      showDebug && /* @__PURE__ */ jsxDEV("div", { style: { ...styles.card, gridColumn: "1 / -1", height: "600px", display: "flex", flexDirection: "column" }, children: [
-        /* @__PURE__ */ jsxDEV("div", { style: { marginBottom: "20px" }, children: [
-          /* @__PURE__ */ jsxDEV("h2", { style: { marginBottom: "5px" }, children: "\u{1F579}\uFE0F Interactive Scene Preview" }, void 0, false, {
+      showDebug && /* @__PURE__ */ jsxDEV(Fragment, { children: [
+        /* @__PURE__ */ jsxDEV(
+          DebugPanel,
+          {
+            config,
+            setConfig,
+            stats,
+            recording,
+            renderAllChunks,
+            showHelpers,
+            setShowHelpers
+          },
+          void 0,
+          false,
+          {
             fileName: "<stdin>",
-            lineNumber: 110,
-            columnNumber: 15
-          }),
-          /* @__PURE__ */ jsxDEV("p", { style: { opacity: 0.8, fontSize: "14px" }, children: [
-            "Click inside to capture mouse control. ",
-            /* @__PURE__ */ jsxDEV("b", { children: "WASD" }, void 0, false, {
-              fileName: "<stdin>",
-              lineNumber: 112,
-              columnNumber: 56
-            }),
-            " to move, ",
-            /* @__PURE__ */ jsxDEV("b", { children: "Space/Shift" }, void 0, false, {
-              fileName: "<stdin>",
-              lineNumber: 112,
-              columnNumber: 77
-            }),
-            " to fly up/down, ",
-            /* @__PURE__ */ jsxDEV("b", { children: "Mouse" }, void 0, false, {
-              fileName: "<stdin>",
-              lineNumber: 112,
-              columnNumber: 112
-            }),
-            " to look. ",
-            /* @__PURE__ */ jsxDEV("b", { children: "ESC" }, void 0, false, {
-              fileName: "<stdin>",
-              lineNumber: 112,
-              columnNumber: 134
-            }),
-            " to release."
-          ] }, void 0, true, {
+            lineNumber: 136,
+            columnNumber: 13
+          }
+        ),
+        /* @__PURE__ */ jsxDEV(
+          ChunkGrid,
+          {
+            stats,
+            renderStatus,
+            recordChunk
+          },
+          void 0,
+          false,
+          {
             fileName: "<stdin>",
-            lineNumber: 111,
-            columnNumber: 15
-          })
-        ] }, void 0, true, {
-          fileName: "<stdin>",
-          lineNumber: 109,
-          columnNumber: 13
-        }),
-        /* @__PURE__ */ jsxDEV("div", { style: { flex: 1, width: "100%", borderRadius: "12px", overflow: "hidden", background: "#111" }, children: /* @__PURE__ */ jsxDEV(KitchenSceneInteractive, { showHelpers }, void 0, false, {
-          fileName: "<stdin>",
-          lineNumber: 116,
-          columnNumber: 15
-        }) }, void 0, false, {
-          fileName: "<stdin>",
-          lineNumber: 115,
-          columnNumber: 13
-        })
+            lineNumber: 146,
+            columnNumber: 13
+          }
+        )
       ] }, void 0, true, {
         fileName: "<stdin>",
-        lineNumber: 108,
+        lineNumber: 135,
         columnNumber: 11
       })
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 52,
+      lineNumber: 100,
       columnNumber: 7
+    }),
+    !showDebug && /* @__PURE__ */ jsxDEV("div", { style: { textAlign: "center", opacity: 0.3, marginTop: "40px", fontSize: "12px" }, children: [
+      "Press ",
+      /* @__PURE__ */ jsxDEV("b", { children: "~" }, void 0, false, {
+        fileName: "<stdin>",
+        lineNumber: 157,
+        columnNumber: 19
+      }),
+      " to toggle debug & render tools"
+    ] }, void 0, true, {
+      fileName: "<stdin>",
+      lineNumber: 156,
+      columnNumber: 9
     })
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 44,
+    lineNumber: 72,
     columnNumber: 5
   });
 };
 createRoot(document.getElementById("app")).render(/* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
   fileName: "<stdin>",
-  lineNumber: 125,
+  lineNumber: 164,
   columnNumber: 51
 }));
