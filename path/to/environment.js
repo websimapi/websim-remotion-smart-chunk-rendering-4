@@ -14,10 +14,10 @@ export const setupLighting = (scene) => {
   sunLight.castShadow = true;
 
   // Ultra-High Quality Shadow Map for "RTX" feel
-  // OPTIMIZED for Quest 2: Reduced resolution to prevent memory issues and improve perf
+  // Optimized for Quest 2: Reduced to 1024/2048 to prevent VRAM crash (Black Screen)
   sunLight.shadow.mapSize.width = 2048; 
   sunLight.shadow.mapSize.height = 2048;
-  sunLight.shadow.bias = -0.002; // Increased bias significantly to fix wall flickering/acne
+  sunLight.shadow.bias = -0.002; 
   sunLight.shadow.normalBias = 0.05; 
   sunLight.shadow.radius = 1.5; 
   

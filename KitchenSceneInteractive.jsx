@@ -6,6 +6,22 @@ import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFa
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import { setupPostProcessing } from "./postprocessing.js";
 import { createKitchenScene } from "./sceneSetup.js";
+const SCENE_UNIT_SCALE = 3.28;
+const checkCollision = (position) => {
+  if (position.x < -9 || position.x > 9) return true;
+  if (position.z > 16) return true;
+  if (position.z < -1.5) return true;
+  if (position.z < 2.5 && position.x > -5.5 && position.x < 5.5) {
+    return true;
+  }
+  return false;
+};
+const checkHandCollision = (handPos) => {
+  if (handPos.y < 0.5 && handPos.z < 2.2 && handPos.z > -2.2 && handPos.x > -5.2 && handPos.x < 5.2) {
+    return true;
+  }
+  return false;
+};
 const KitchenSceneInteractive = ({ showHelpers }) => {
   const containerRef = useRef(null);
   const rendererRef = useRef(null);
@@ -76,11 +92,10 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
         window.addEventListener("keydown", resume);
       }
     });
-    const SCENE_UNIT_SCALE = 3.28;
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
-      dolly.rotation.set(0, Math.PI, 0);
+      dolly.rotation.set(0, 0, 0);
       if (music.context.state === "suspended") music.context.resume();
       if (!music.isPlaying) music.play();
     });
@@ -132,15 +147,18 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
     dolly.add(controllerGrip1);
     const hand1 = renderer.xr.getHand(0);
-    hand1.add(handModelFactory.createHandModel(hand1, "mesh"));
+    const handModel1 = handModelFactory.createHandModel(hand1, "mesh");
+    hand1.add(handModel1);
     dolly.add(hand1);
     const controllerGrip2 = renderer.xr.getControllerGrip(1);
     controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
     dolly.add(controllerGrip2);
     const hand2 = renderer.xr.getHand(1);
-    hand2.add(handModelFactory.createHandModel(hand2, "mesh"));
+    const handModel2 = handModelFactory.createHandModel(hand2, "mesh");
+    hand2.add(handModel2);
     dolly.add(hand2);
     const workingVec3 = new THREE.Vector3();
+    const tempPos = new THREE.Vector3();
     const sun = scene.children.find((c) => c.isDirectionalLight);
     if (sun) {
       const lightHelper = new THREE.DirectionalLightHelper(sun, 2, 16776960);
@@ -262,23 +280,43 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       lastTime = now;
       virtualFrame += delta * simFps;
       if (renderer.xr.isPresenting) {
-        const sources = [hand1, hand2, controller1, controller2];
+        const sources = [{ source: hand1, model: handModel1 }, { source: hand2, model: handModel2 }];
         const headPos = new THREE.Vector3();
         const handPos = new THREE.Vector3();
         const moveDir = new THREE.Vector3();
         camera.getWorldPosition(headPos);
-        sources.forEach((source) => {
+        let isMoving = false;
+        sources.forEach(({ source, model }) => {
           source.getWorldPosition(handPos);
+          if (checkHandCollision(handPos)) {
+            source.traverse((child) => {
+              if (child.isMesh && child.material) {
+                child.material.emissive = new THREE.Color(16711680);
+                child.material.emissiveIntensity = 0.5;
+              }
+            });
+          } else {
+            source.traverse((child) => {
+              if (child.isMesh && child.material) {
+                child.material.emissive = new THREE.Color(0);
+                child.material.emissiveIntensity = 0;
+              }
+            });
+          }
           const dx = handPos.x - headPos.x;
           const dz = handPos.z - headPos.z;
           const dist = Math.sqrt(dx * dx + dz * dz);
-          const threshold = 0.35 * SCENE_UNIT_SCALE;
+          const threshold = 0.25 * SCENE_UNIT_SCALE;
           if (dist > threshold) {
             moveDir.set(dx, 0, dz).normalize();
             const extension = (dist - threshold) / SCENE_UNIT_SCALE;
             const speedMeters = 1.5 + extension * 5;
             const speedWorld = speedMeters * SCENE_UNIT_SCALE * delta;
-            dolly.position.addScaledVector(moveDir, speedWorld);
+            tempPos.copy(dolly.position).addScaledVector(moveDir, speedWorld);
+            if (!checkCollision(tempPos)) {
+              dolly.position.copy(tempPos);
+              isMoving = true;
+            }
           }
         });
       }
@@ -343,7 +381,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 427,
+      lineNumber: 483,
       columnNumber: 5
     }
   );
