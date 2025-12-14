@@ -122,7 +122,9 @@ export const createEnvironment = (scene, materials) => {
 
   // Walls
   const wallGroup = new THREE.Group();
-  wallGroup.position.z = -2.0; // Front wall plane
+  // Moved wall back to -2.15 to prevent Z-fighting with window elements (at -2.0)
+  // This resolves the glitching/flashing on the front wall
+  wallGroup.position.z = -2.15; 
   
   // Material Array for Front Walls: [Right, Left, Top, Bottom, Front(Inside), Back(Outside)]
   // We make the Back face (Outside) dark (exteriorMat) to prevent it from glowing in the sun
