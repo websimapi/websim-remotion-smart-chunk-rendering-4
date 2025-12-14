@@ -276,13 +276,13 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
           const dx = sourcePos.x - camPos.x;
           const dz = sourcePos.z - camPos.z;
           const dist = Math.sqrt(dx * dx + dz * dz);
-          const reachThreshold = 0.25;
+          const reachThreshold = 0.15;
           if (dist > reachThreshold) {
             workingVec3.set(dx, 0, dz).normalize();
             workingVec3.applyQuaternion(dolly.quaternion);
             const extension = dist - reachThreshold;
-            const speedMultiplier = 1 + extension * 5;
-            const moveSpeed = 2 * speedMultiplier * delta * SCENE_UNIT_SCALE;
+            const speedMultiplier = 1.5 + Math.pow(extension * 6, 2);
+            const moveSpeed = 3 * speedMultiplier * delta * SCENE_UNIT_SCALE;
             dolly.position.addScaledVector(workingVec3, moveSpeed);
           }
         });
@@ -348,7 +348,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 448,
+      lineNumber: 449,
       columnNumber: 5
     }
   );
