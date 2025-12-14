@@ -36,7 +36,8 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.toneMappingExposure = 0.8;
     canvas.style.width = "100%";
     canvas.style.height = "100%";
-    const vrButton = VRButton.createButton(renderer);
+    const sessionInit = { optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking", "layers"] };
+    const vrButton = VRButton.createButton(renderer, sessionInit);
     vrButton.style.zIndex = "10000";
     document.body.appendChild(vrButton);
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
@@ -77,12 +78,14 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
+      dolly.rotation.set(0, Math.PI, 0);
       if (music.context.state === "suspended") music.context.resume();
       if (!music.isPlaying) music.play();
     });
     renderer.xr.addEventListener("sessionend", () => {
       dolly.scale.set(1, 1, 1);
       dolly.position.set(0, 0, 0);
+      dolly.rotation.set(0, 0, 0);
       camera.position.set(3, 2, 6);
       camera.lookAt(0, 0, 0);
       cameraRotation.current.setFromQuaternion(camera.quaternion, "YXZ");
@@ -317,7 +320,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 385,
+      lineNumber: 388,
       columnNumber: 5
     }
   );
