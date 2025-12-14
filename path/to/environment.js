@@ -14,10 +14,11 @@ export const setupLighting = (scene) => {
   sunLight.castShadow = true;
 
   // Ultra-High Quality Shadow Map for "RTX" feel
-  sunLight.shadow.mapSize.width = 4096; 
-  sunLight.shadow.mapSize.height = 4096;
-  sunLight.shadow.bias = -0.0005; // Adjusted bias to prevent flickering/acne on walls
-  sunLight.shadow.normalBias = 0.02; 
+  // OPTIMIZED for Quest 2: Reduced resolution to prevent memory issues and improve perf
+  sunLight.shadow.mapSize.width = 2048; 
+  sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.bias = -0.002; // Increased bias significantly to fix wall flickering/acne
+  sunLight.shadow.normalBias = 0.05; 
   sunLight.shadow.radius = 1.5; 
   
   // Expanded shadow frustum to cover the larger distance
@@ -55,13 +56,15 @@ export const createEnvironment = (scene, materials) => {
   const frameThickness = 0.1;
   const frameDepth = 0.15;
   const windowZ = -2;
+  // Offset frames slightly forward to prevent z-fighting with the wall plane
+  const frameZ = windowZ + 0.08;
 
   // Window Frame
   const topFrame = new THREE.Mesh(
     new THREE.BoxGeometry(windowWidth + frameThickness * 2, frameThickness, frameDepth),
     frameMat,
   );
-  topFrame.position.set(0, 2.8, windowZ);
+  topFrame.position.set(0, 2.8, frameZ);
   topFrame.castShadow = true;
   scene.add(topFrame);
 
@@ -69,7 +72,7 @@ export const createEnvironment = (scene, materials) => {
     new THREE.BoxGeometry(windowWidth + frameThickness * 2, frameThickness, frameDepth),
     frameMat,
   );
-  bottomFrame.position.set(0, 0.2, windowZ);
+  bottomFrame.position.set(0, 0.2, frameZ);
   bottomFrame.castShadow = true;
   bottomFrame.receiveShadow = true;
   scene.add(bottomFrame);
@@ -78,7 +81,7 @@ export const createEnvironment = (scene, materials) => {
     new THREE.BoxGeometry(frameThickness, windowHeight + 0.1, frameDepth),
     frameMat,
   );
-  leftFrame.position.set(-windowWidth / 2 - frameThickness / 2, 1.5, windowZ);
+  leftFrame.position.set(-windowWidth / 2 - frameThickness / 2, 1.5, frameZ);
   leftFrame.castShadow = true;
   scene.add(leftFrame);
 
@@ -86,7 +89,7 @@ export const createEnvironment = (scene, materials) => {
     new THREE.BoxGeometry(frameThickness, windowHeight + 0.1, frameDepth),
     frameMat,
   );
-  rightFrame.position.set(windowWidth / 2 + frameThickness / 2, 1.5, windowZ);
+  rightFrame.position.set(windowWidth / 2 + frameThickness / 2, 1.5, frameZ);
   rightFrame.castShadow = true;
   scene.add(rightFrame);
 

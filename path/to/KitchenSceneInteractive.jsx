@@ -39,7 +39,8 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.toneMappingExposure = 0.8;
     canvas.style.width = "100%";
     canvas.style.height = "100%";
-    const vrButton = VRButton.createButton(renderer);
+    const sessionInit = { optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking", "layers"] };
+    const vrButton = VRButton.createButton(renderer, sessionInit);
     vrButton.style.zIndex = "10000";
     document.body.appendChild(vrButton);
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
@@ -80,7 +81,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
-      camera.near = 0.05;
+      camera.near = 0.1;
       camera.updateProjectionMatrix();
       if (music.context.state === "suspended") music.context.resume();
       if (!music.isPlaying) music.play();
@@ -271,11 +272,15 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
           ctrl.getWorldPosition(dummyHandPos);
           camera.getWorldPosition(dummyCamPos);
           const dist = dummyHandPos.distanceTo(dummyCamPos);
-          const reachThreshold = 0.55 * SCENE_UNIT_SCALE;
+          const reachThreshold = 0.4 * SCENE_UNIT_SCALE;
           if (dist > reachThreshold) {
-            workingVec3.subVectors(dummyHandPos, dummyCamPos).normalize();
+            workingVec3.subVectors(dummyHandPos, dummyCamPos);
+            workingVec3.y = 0;
+            workingVec3.normalize();
             const moveSpeed = 4 * delta;
-            dolly.position.addScaledVector(workingVec3, moveSpeed);
+            if (workingVec3.lengthSq() > 0.5) {
+              dolly.position.addScaledVector(workingVec3, moveSpeed);
+            }
           }
         });
       }
