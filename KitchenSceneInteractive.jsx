@@ -73,13 +73,19 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
         window.addEventListener("keydown", resume);
       }
     });
+    const SCENE_UNIT_SCALE = 3.28;
     renderer.xr.addEventListener("sessionstart", () => {
+      dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
       if (music.context.state === "suspended") music.context.resume();
       if (!music.isPlaying) music.play();
     });
     renderer.xr.addEventListener("sessionend", () => {
+      dolly.scale.set(1, 1, 1);
       dolly.position.set(0, 0, 0);
+      camera.position.set(3, 2, 6);
+      camera.lookAt(0, 0, 0);
+      cameraRotation.current.setFromQuaternion(camera.quaternion, "YXZ");
       music.pause();
     });
     const controller1 = renderer.xr.getController(0);
@@ -310,7 +316,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 368,
+      lineNumber: 380,
       columnNumber: 5
     }
   );
