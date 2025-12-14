@@ -81,7 +81,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
-      dolly.rotation.set(0, Math.PI, 0);
+      dolly.rotation.set(0, 0, 0);
       camera.near = 0.1;
       camera.updateProjectionMatrix();
       if (music.context.state === "suspended") music.context.resume();
@@ -268,19 +268,21 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       lastTime = now;
       virtualFrame += delta * simFps;
       if (renderer.xr.isPresenting) {
-        [controller1, controller2].forEach((ctrl) => {
-          if (!ctrl) return;
-          ctrl.getWorldPosition(dummyHandPos);
-          camera.getWorldPosition(dummyCamPos);
-          const dx = dummyHandPos.x - dummyCamPos.x;
-          const dz = dummyHandPos.z - dummyCamPos.z;
-          const horizontalDist = Math.sqrt(dx * dx + dz * dz);
-          const reachThreshold = 0.35 * SCENE_UNIT_SCALE;
-          if (horizontalDist > reachThreshold) {
+        const sources = [hand1, hand2, controller1, controller2];
+        sources.forEach((source) => {
+          if (!source || !source.visible) return;
+          const camPos = camera.position;
+          const sourcePos = source.position;
+          const dx = sourcePos.x - camPos.x;
+          const dz = sourcePos.z - camPos.z;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          const reachThreshold = 0.25;
+          if (dist > reachThreshold) {
             workingVec3.set(dx, 0, dz).normalize();
-            const extension = Math.max(0, horizontalDist - reachThreshold);
-            const speedMultiplier = 1 + extension / SCENE_UNIT_SCALE * 8;
-            const moveSpeed = 3.5 * speedMultiplier * delta;
+            workingVec3.applyQuaternion(dolly.quaternion);
+            const extension = dist - reachThreshold;
+            const speedMultiplier = 1 + extension * 5;
+            const moveSpeed = 2 * speedMultiplier * delta * SCENE_UNIT_SCALE;
             dolly.position.addScaledVector(workingVec3, moveSpeed);
           }
         });
@@ -346,7 +348,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 440,
+      lineNumber: 448,
       columnNumber: 5
     }
   );
