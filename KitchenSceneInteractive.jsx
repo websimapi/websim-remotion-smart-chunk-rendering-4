@@ -150,6 +150,14 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     const handModel1 = handModelFactory.createHandModel(hand1, "mesh");
     hand1.add(handModel1);
     dolly.add(hand1);
+    hand1.addEventListener("connected", (e) => {
+      if (e.data.hand) {
+        controllerGrip1.visible = false;
+      }
+    });
+    hand1.addEventListener("disconnected", () => {
+      controllerGrip1.visible = true;
+    });
     const controllerGrip2 = renderer.xr.getControllerGrip(1);
     controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
     dolly.add(controllerGrip2);
@@ -157,6 +165,14 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     const handModel2 = handModelFactory.createHandModel(hand2, "mesh");
     hand2.add(handModel2);
     dolly.add(hand2);
+    hand2.addEventListener("connected", (e) => {
+      if (e.data.hand) {
+        controllerGrip2.visible = false;
+      }
+    });
+    hand2.addEventListener("disconnected", () => {
+      controllerGrip2.visible = true;
+    });
     const workingVec3 = new THREE.Vector3();
     const tempPos = new THREE.Vector3();
     const sun = scene.children.find((c) => c.isDirectionalLight);
@@ -280,44 +296,46 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       lastTime = now;
       virtualFrame += delta * simFps;
       if (renderer.xr.isPresenting) {
-        const sources = [{ source: hand1, model: handModel1 }, { source: hand2, model: handModel2 }];
+        const sources = [hand1, hand2];
         const headPos = new THREE.Vector3();
         const handPos = new THREE.Vector3();
         const moveDir = new THREE.Vector3();
         camera.getWorldPosition(headPos);
-        let isMoving = false;
-        sources.forEach(({ source, model }) => {
+        const deadzoneMeters = 0.2;
+        const deadzoneUnits = deadzoneMeters * SCENE_UNIT_SCALE;
+        sources.forEach((source) => {
+          if (!source.visible) return;
           source.getWorldPosition(handPos);
+          let isMoving = false;
+          let collisionState = false;
           if (checkHandCollision(handPos)) {
-            source.traverse((child) => {
-              if (child.isMesh && child.material) {
-                child.material.emissive = new THREE.Color(16711680);
-                child.material.emissiveIntensity = 0.5;
-              }
-            });
+            collisionState = true;
           } else {
-            source.traverse((child) => {
-              if (child.isMesh && child.material) {
-                child.material.emissive = new THREE.Color(0);
-                child.material.emissiveIntensity = 0;
+            const dx = handPos.x - headPos.x;
+            const dz = handPos.z - headPos.z;
+            const planarDist = Math.sqrt(dx * dx + dz * dz);
+            if (planarDist > deadzoneUnits) {
+              moveDir.set(dx, 0, dz).normalize();
+              const extensionMeters = planarDist / SCENE_UNIT_SCALE - deadzoneMeters;
+              const baseSpeed = 1;
+              const boost = extensionMeters * 8;
+              const speedMeters = baseSpeed + boost * boost;
+              const speedWorld = speedMeters * SCENE_UNIT_SCALE * delta;
+              tempPos.copy(dolly.position).addScaledVector(moveDir, speedWorld);
+              if (!checkCollision(tempPos)) {
+                dolly.position.copy(tempPos);
+                isMoving = true;
               }
-            });
-          }
-          const dx = handPos.x - headPos.x;
-          const dz = handPos.z - headPos.z;
-          const dist = Math.sqrt(dx * dx + dz * dz);
-          const threshold = 0.25 * SCENE_UNIT_SCALE;
-          if (dist > threshold) {
-            moveDir.set(dx, 0, dz).normalize();
-            const extension = (dist - threshold) / SCENE_UNIT_SCALE;
-            const speedMeters = 1.5 + extension * 5;
-            const speedWorld = speedMeters * SCENE_UNIT_SCALE * delta;
-            tempPos.copy(dolly.position).addScaledVector(moveDir, speedWorld);
-            if (!checkCollision(tempPos)) {
-              dolly.position.copy(tempPos);
-              isMoving = true;
             }
           }
+          const color = collisionState ? 16711680 : isMoving ? 65280 : 0;
+          const intensity = color === 0 ? 0 : 0.5;
+          source.traverse((child) => {
+            if (child.isMesh && child.material) {
+              child.material.emissive.setHex(color);
+              child.material.emissiveIntensity = intensity;
+            }
+          });
         });
       }
       if (document.pointerLockElement === canvas) {
@@ -381,7 +399,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 483,
+      lineNumber: 512,
       columnNumber: 5
     }
   );
