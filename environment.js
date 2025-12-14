@@ -16,7 +16,7 @@ export const setupLighting = (scene) => {
   // Ultra-High Quality Shadow Map for "RTX" feel
   sunLight.shadow.mapSize.width = 4096; 
   sunLight.shadow.mapSize.height = 4096;
-  sunLight.shadow.bias = -0.0001; 
+  sunLight.shadow.bias = -0.002; 
   sunLight.shadow.normalBias = 0.05; 
   sunLight.shadow.radius = 1.5; 
   

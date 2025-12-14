@@ -22,7 +22,9 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      powerPreference: "high-performance"
+      powerPreference: "high-performance",
+      logarithmicDepthBuffer: true
+      // Essential for VR to prevent Z-fighting on walls
     });
     renderer.xr.enabled = true;
     const w = containerRef.current.clientWidth;
@@ -259,6 +261,27 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
       const delta = Math.min((now - lastTime) / 1e3, 0.1);
       lastTime = now;
       virtualFrame += delta * simFps;
+      if (renderer.xr.isPresenting) {
+        const sources = [hand1, hand2, controller1, controller2];
+        const headPos = new THREE.Vector3();
+        const handPos = new THREE.Vector3();
+        const moveDir = new THREE.Vector3();
+        camera.getWorldPosition(headPos);
+        sources.forEach((source) => {
+          source.getWorldPosition(handPos);
+          const dx = handPos.x - headPos.x;
+          const dz = handPos.z - headPos.z;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          const threshold = 0.35 * SCENE_UNIT_SCALE;
+          if (dist > threshold) {
+            moveDir.set(dx, 0, dz).normalize();
+            const extension = (dist - threshold) / SCENE_UNIT_SCALE;
+            const speedMeters = 1.5 + extension * 5;
+            const speedWorld = speedMeters * SCENE_UNIT_SCALE * delta;
+            dolly.position.addScaledVector(moveDir, speedWorld);
+          }
+        });
+      }
       if (document.pointerLockElement === canvas) {
         const moveSpeed = 5 * delta;
         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
@@ -320,7 +343,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 388,
+      lineNumber: 427,
       columnNumber: 5
     }
   );
