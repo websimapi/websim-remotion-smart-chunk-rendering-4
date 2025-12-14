@@ -81,6 +81,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     renderer.xr.addEventListener("sessionstart", () => {
       dolly.scale.set(SCENE_UNIT_SCALE, SCENE_UNIT_SCALE, SCENE_UNIT_SCALE);
       dolly.position.set(0, -3.5, 6);
+      dolly.rotation.set(0, Math.PI, 0);
       camera.near = 0.1;
       camera.updateProjectionMatrix();
       if (music.context.state === "suspended") music.context.resume();
@@ -271,16 +272,16 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
           if (!ctrl) return;
           ctrl.getWorldPosition(dummyHandPos);
           camera.getWorldPosition(dummyCamPos);
-          const dist = dummyHandPos.distanceTo(dummyCamPos);
-          const reachThreshold = 0.4 * SCENE_UNIT_SCALE;
-          if (dist > reachThreshold) {
-            workingVec3.subVectors(dummyHandPos, dummyCamPos);
-            workingVec3.y = 0;
-            workingVec3.normalize();
-            const moveSpeed = 4 * delta;
-            if (workingVec3.lengthSq() > 0.5) {
-              dolly.position.addScaledVector(workingVec3, moveSpeed);
-            }
+          const dx = dummyHandPos.x - dummyCamPos.x;
+          const dz = dummyHandPos.z - dummyCamPos.z;
+          const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+          const reachThreshold = 0.35 * SCENE_UNIT_SCALE;
+          if (horizontalDist > reachThreshold) {
+            workingVec3.set(dx, 0, dz).normalize();
+            const extension = Math.max(0, horizontalDist - reachThreshold);
+            const speedMultiplier = 1 + extension / SCENE_UNIT_SCALE * 8;
+            const moveSpeed = 3.5 * speedMultiplier * delta;
+            dolly.position.addScaledVector(workingVec3, moveSpeed);
           }
         });
       }
@@ -345,7 +346,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 439,
+      lineNumber: 440,
       columnNumber: 5
     }
   );
