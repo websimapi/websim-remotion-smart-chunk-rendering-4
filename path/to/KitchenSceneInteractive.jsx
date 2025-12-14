@@ -134,13 +134,13 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
     dolly.add(controllerGrip1);
     const hand1 = renderer.xr.getHand(0);
-    hand1.add(handModelFactory.createHandModel(hand1));
+    hand1.add(handModelFactory.createHandModel(hand1, "mesh"));
     dolly.add(hand1);
     const controllerGrip2 = renderer.xr.getControllerGrip(1);
     controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
     dolly.add(controllerGrip2);
     const hand2 = renderer.xr.getHand(1);
-    hand2.add(handModelFactory.createHandModel(hand2));
+    hand2.add(handModelFactory.createHandModel(hand2, "mesh"));
     dolly.add(hand2);
     const workingVec3 = new THREE.Vector3();
     const workingQuat = new THREE.Quaternion();
@@ -345,7 +345,7 @@ const KitchenSceneInteractive = ({ showHelpers }) => {
     false,
     {
       fileName: "<stdin>",
-      lineNumber: 434,
+      lineNumber: 439,
       columnNumber: 5
     }
   );
